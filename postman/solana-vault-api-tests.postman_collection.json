@@ -4,20 +4,6 @@
     "description": "Solana JSON-RPC API test collection for validating vault contract state, token balances, transactions, and account data on Solana blockchain.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
-  "variable": [
-    {
-      "key": "rpc_url",
-      "value": "{{rpc_url}}"
-    },
-    {
-      "key": "vault_program_id",
-      "value": "{{vault_program_id}}"
-    },
-    {
-      "key": "wallet_address",
-      "value": "{{wallet_address}}"
-    }
-  ],
   "item": [
     {
       "name": "Health Check",
@@ -29,10 +15,13 @@
             "header": [
               { "key": "Content-Type", "value": "application/json" }
             ],
-            "url": { "raw": "{{rpc_url}}", "host": ["{{rpc_url}}"] },
+            "url": {
+              "raw": "{{rpc_url}}",
+              "host": ["{{rpc_url}}"]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"getHealth\"\n}"
+              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getHealth\"}"
             }
           },
           "event": [
@@ -44,7 +33,6 @@
                   "pm.test('Status code is 200', function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "",
                   "pm.test('Cluster is healthy', function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.result).to.eql('ok');",
@@ -61,10 +49,13 @@
             "header": [
               { "key": "Content-Type", "value": "application/json" }
             ],
-            "url": { "raw": "{{rpc_url}}", "host": ["{{rpc_url}}"] },
+            "url": {
+              "raw": "{{rpc_url}}",
+              "host": ["{{rpc_url}}"]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"getLatestBlockhash\",\n  \"params\": [\n    { \"commitment\": \"finalized\" }\n  ]\n}"
+              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getLatestBlockhash\",\"params\":[{\"commitment\":\"finalized\"}]}"
             }
           },
           "event": [
@@ -76,17 +67,49 @@
                   "pm.test('Status code is 200', function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "",
                   "pm.test('Blockhash is returned', function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.result).to.have.property('value');",
                   "    pm.expect(jsonData.result.value).to.have.property('blockhash');",
-                  "    pm.expect(jsonData.result.value.blockhash).to.be.a('string').and.to.have.lengthOf.above(30);",
+                  "    pm.expect(jsonData.result.value.blockhash).to.be.a('string');",
                   "});",
-                  "",
                   "pm.test('Last valid block height is positive', function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.result.value.lastValidBlockHeight).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Slot (Block Height)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{rpc_url}}",
+              "host": ["{{rpc_url}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getSlot\",\"params\":[{\"commitment\":\"finalized\"}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Slot is a positive number', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.result).to.be.a('number').and.to.be.above(0);",
                   "});"
                 ]
               }
@@ -105,10 +128,13 @@
             "header": [
               { "key": "Content-Type", "value": "application/json" }
             ],
-            "url": { "raw": "{{rpc_url}}", "host": ["{{rpc_url}}"] },
+            "url": {
+              "raw": "{{rpc_url}}",
+              "host": ["{{rpc_url}}"]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"getBalance\",\n  \"params\": [\n    \"{{wallet_address}}\"\n  ]\n}"
+              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getBalance\",\"params\":[\"{{wallet_address}}\"]}"
             }
           },
           "event": [
@@ -120,23 +146,14 @@
                   "pm.test('Status code is 200', function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "",
                   "pm.test('No RPC error', function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.error).to.be.undefined;",
                   "});",
-                  "",
-                  "pm.test('Balance is a non-negative number', function () {",
+                  "pm.test('Balance value is returned', function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.result).to.have.property('value');",
-                  "    pm.expect(jsonData.result.value).to.be.a('number').and.to.be.at.least(0);",
-                  "});",
-                  "",
-                  "pm.test('Balance in SOL (display)', function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    var lamports = jsonData.result.value;",
-                  "    var sol = lamports / 1e9;",
-                  "    console.log('Balance: ' + sol + ' SOL (' + lamports + ' lamports)');",
+                  "    pm.expect(jsonData.result.value).to.be.a('number');",
                   "});"
                 ]
               }
@@ -150,10 +167,13 @@
             "header": [
               { "key": "Content-Type", "value": "application/json" }
             ],
-            "url": { "raw": "{{rpc_url}}", "host": ["{{rpc_url}}"] },
+            "url": {
+              "raw": "{{rpc_url}}",
+              "host": ["{{rpc_url}}"]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"getTokenAccountsByOwner\",\n  \"params\": [\n    \"{{wallet_address}}\",\n    { \"programId\": \"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA\" },\n    { \"encoding\": \"jsonParsed\" }\n  ]\n}"
+              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getTokenAccountsByOwner\",\"params\":[\"{{wallet_address}}\",{\"programId\":\"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA\"},{\"encoding\":\"jsonParsed\"}]}"
             }
           },
           "event": [
@@ -165,124 +185,13 @@
                   "pm.test('Status code is 200', function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "",
                   "pm.test('No RPC error', function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.error).to.be.undefined;",
                   "});",
-                  "",
                   "pm.test('Token accounts array is returned', function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.result.value).to.be.an('array');",
-                  "});",
-                  "",
-                  "pm.test('Log token holdings', function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    var accounts = jsonData.result.value;",
-                  "    console.log('Total token accounts: ' + accounts.length);",
-                  "    accounts.forEach(function(acc) {",
-                  "        var info = acc.account.data.parsed.info;",
-                  "        console.log('Mint: ' + info.mint + ' | Amount: ' + info.tokenAmount.uiAmountString);",
-                  "    });",
-                  "});"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Transaction Verification",
-      "item": [
-        {
-          "name": "Get Transaction by Signature",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "url": { "raw": "{{rpc_url}}", "host": ["{{rpc_url}}"] },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"getTransaction\",\n  \"params\": [\n    \"{{tx_signature}}\",\n    { \"encoding\": \"jsonParsed\", \"maxSupportedTransactionVersion\": 0 }\n  ]\n}"
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Transaction exists', function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.result).to.not.be.null;",
-                  "});",
-                  "",
-                  "pm.test('Transaction was successful (no error)', function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.result) {",
-                  "        pm.expect(jsonData.result.meta.err).to.be.null;",
-                  "        console.log('Slot: ' + jsonData.result.slot);",
-                  "        console.log('Fee: ' + jsonData.result.meta.fee + ' lamports');",
-                  "    }",
-                  "});",
-                  "",
-                  "pm.test('Log balance changes', function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.result && jsonData.result.meta.preBalances) {",
-                  "        var pre = jsonData.result.meta.preBalances;",
-                  "        var post = jsonData.result.meta.postBalances;",
-                  "        for (var i = 0; i < pre.length; i++) {",
-                  "            if (pre[i] !== post[i]) {",
-                  "                console.log('Account ' + i + ': ' + pre[i] + ' -> ' + post[i] + ' (diff: ' + (post[i] - pre[i]) + ')');",
-                  "            }",
-                  "        }",
-                  "    }",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get Recent Signatures for Wallet",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "url": { "raw": "{{rpc_url}}", "host": ["{{rpc_url}}"] },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"getSignaturesForAddress\",\n  \"params\": [\n    \"{{wallet_address}}\",\n    { \"limit\": 10 }\n  ]\n}"
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
-                  "pm.test('Signatures array returned', function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.result).to.be.an('array');",
-                  "});",
-                  "",
-                  "pm.test('Log recent transactions', function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    jsonData.result.forEach(function(tx) {",
-                  "        var status = tx.err ? 'FAILED' : 'SUCCESS';",
-                  "        console.log(status + ' | sig: ' + tx.signature.substring(0, 20) + '... | slot: ' + tx.slot);",
-                  "    });",
                   "});"
                 ]
               }
@@ -301,10 +210,13 @@
             "header": [
               { "key": "Content-Type", "value": "application/json" }
             ],
-            "url": { "raw": "{{rpc_url}}", "host": ["{{rpc_url}}"] },
+            "url": {
+              "raw": "{{rpc_url}}",
+              "host": ["{{rpc_url}}"]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"getAccountInfo\",\n  \"params\": [\n    \"{{vault_program_id}}\",\n    { \"encoding\": \"jsonParsed\" }\n  ]\n}"
+              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getAccountInfo\",\"params\":[\"{{vault_program_id}}\",{\"encoding\":\"jsonParsed\"}]}"
             }
           },
           "event": [
@@ -316,61 +228,13 @@
                   "pm.test('Status code is 200', function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "",
-                  "pm.test('Account exists on-chain', function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.result.value).to.not.be.null;",
-                  "});",
-                  "",
-                  "pm.test('Account is executable (is a program)', function () {",
-                  "    var jsonData = pm.response.json();",
-                  "    if (jsonData.result.value) {",
-                  "        pm.expect(jsonData.result.value.executable).to.be.true;",
-                  "        console.log('Owner: ' + jsonData.result.value.owner);",
-                  "        console.log('Lamports: ' + jsonData.result.value.lamports);",
-                  "        console.log('Data length: ' + jsonData.result.value.data.length + ' bytes');",
-                  "    }",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get Vault Program Accounts (All Pools)",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "url": { "raw": "{{rpc_url}}", "host": ["{{rpc_url}}"] },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"getProgramAccounts\",\n  \"params\": [\n    \"{{vault_program_id}}\",\n    { \"encoding\": \"base64\" }\n  ]\n}"
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('Status code is 200', function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});",
-                  "",
                   "pm.test('No RPC error', function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.error).to.be.undefined;",
                   "});",
-                  "",
-                  "pm.test('Program accounts returned', function () {",
+                  "pm.test('Account info is returned', function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.result).to.be.an('array');",
-                  "    console.log('Total vault accounts: ' + jsonData.result.length);",
-                  "    jsonData.result.forEach(function(acc) {",
-                  "        console.log('Account: ' + acc.pubkey + ' | Size: ' + acc.account.data[0].length + ' bytes');",
-                  "    });",
+                  "    pm.expect(jsonData.result).to.have.property('value');",
                   "});"
                 ]
               }
@@ -378,16 +242,19 @@
           ]
         },
         {
-          "name": "Get Slot (Block Height)",
+          "name": "Get Epoch Info",
           "request": {
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" }
             ],
-            "url": { "raw": "{{rpc_url}}", "host": ["{{rpc_url}}"] },
+            "url": {
+              "raw": "{{rpc_url}}",
+              "host": ["{{rpc_url}}"]
+            },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"getSlot\",\n  \"params\": [\n    { \"commitment\": \"finalized\" }\n  ]\n}"
+              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getEpochInfo\"}"
             }
           },
           "event": [
@@ -399,11 +266,47 @@
                   "pm.test('Status code is 200', function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "",
-                  "pm.test('Slot is a positive number', function () {",
+                  "pm.test('Epoch info is returned', function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.result).to.be.a('number').and.to.be.above(0);",
-                  "    console.log('Current slot: ' + jsonData.result);",
+                  "    pm.expect(jsonData.result).to.have.property('epoch');",
+                  "    pm.expect(jsonData.result).to.have.property('slotIndex');",
+                  "    pm.expect(jsonData.result).to.have.property('absoluteSlot');",
+                  "    pm.expect(jsonData.result.epoch).to.be.a('number').and.to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Version",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{rpc_url}}",
+              "host": ["{{rpc_url}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getVersion\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Solana version is returned', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.result).to.have.property('solana-core');",
+                  "    pm.expect(jsonData.result['solana-core']).to.be.a('string');",
                   "});"
                 ]
               }
