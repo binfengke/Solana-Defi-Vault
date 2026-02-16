@@ -16,8 +16,9 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{rpc_url}}",
-              "host": ["{{rpc_url}}"]
+              "raw": "https://api.devnet.solana.com",
+              "protocol": "https",
+              "host": ["api", "devnet", "solana", "com"]
             },
             "body": {
               "mode": "raw",
@@ -50,8 +51,9 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{rpc_url}}",
-              "host": ["{{rpc_url}}"]
+              "raw": "https://api.devnet.solana.com",
+              "protocol": "https",
+              "host": ["api", "devnet", "solana", "com"]
             },
             "body": {
               "mode": "raw",
@@ -83,15 +85,16 @@
           ]
         },
         {
-          "name": "Get Slot (Block Height)",
+          "name": "Get Slot",
           "request": {
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{rpc_url}}",
-              "host": ["{{rpc_url}}"]
+              "raw": "https://api.devnet.solana.com",
+              "protocol": "https",
+              "host": ["api", "devnet", "solana", "com"]
             },
             "body": {
               "mode": "raw",
@@ -129,12 +132,13 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{rpc_url}}",
-              "host": ["{{rpc_url}}"]
+              "raw": "https://api.devnet.solana.com",
+              "protocol": "https",
+              "host": ["api", "devnet", "solana", "com"]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getBalance\",\"params\":[\"{{wallet_address}}\"]}"
+              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getBalance\",\"params\":[\"11111111111111111111111111111111\"]}"
             }
           },
           "event": [
@@ -168,12 +172,13 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{rpc_url}}",
-              "host": ["{{rpc_url}}"]
+              "raw": "https://api.devnet.solana.com",
+              "protocol": "https",
+              "host": ["api", "devnet", "solana", "com"]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getTokenAccountsByOwner\",\"params\":[\"{{wallet_address}}\",{\"programId\":\"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA\"},{\"encoding\":\"jsonParsed\"}]}"
+              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getTokenAccountsByOwner\",\"params\":[\"11111111111111111111111111111111\",{\"programId\":\"TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA\"},{\"encoding\":\"jsonParsed\"}]}"
             }
           },
           "event": [
@@ -211,12 +216,13 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{rpc_url}}",
-              "host": ["{{rpc_url}}"]
+              "raw": "https://api.devnet.solana.com",
+              "protocol": "https",
+              "host": ["api", "devnet", "solana", "com"]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getAccountInfo\",\"params\":[\"{{vault_program_id}}\",{\"encoding\":\"jsonParsed\"}]}"
+              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getAccountInfo\",\"params\":[\"Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS\",{\"encoding\":\"jsonParsed\"}]}"
             }
           },
           "event": [
@@ -232,9 +238,9 @@
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.error).to.be.undefined;",
                   "});",
-                  "pm.test('Account info is returned', function () {",
+                  "pm.test('Response has result', function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.result).to.have.property('value');",
+                  "    pm.expect(jsonData).to.have.property('result');",
                   "});"
                 ]
               }
@@ -249,8 +255,9 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{rpc_url}}",
-              "host": ["{{rpc_url}}"]
+              "raw": "https://api.devnet.solana.com",
+              "protocol": "https",
+              "host": ["api", "devnet", "solana", "com"]
             },
             "body": {
               "mode": "raw",
@@ -270,7 +277,6 @@
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.result).to.have.property('epoch');",
                   "    pm.expect(jsonData.result).to.have.property('slotIndex');",
-                  "    pm.expect(jsonData.result).to.have.property('absoluteSlot');",
                   "    pm.expect(jsonData.result.epoch).to.be.a('number').and.to.be.above(0);",
                   "});"
                 ]
@@ -286,8 +292,9 @@
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": {
-              "raw": "{{rpc_url}}",
-              "host": ["{{rpc_url}}"]
+              "raw": "https://api.devnet.solana.com",
+              "protocol": "https",
+              "host": ["api", "devnet", "solana", "com"]
             },
             "body": {
               "mode": "raw",

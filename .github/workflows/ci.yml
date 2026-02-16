@@ -27,18 +27,23 @@ jobs:
       - name: Install dependencies
         run: npm install --ignore-scripts
 
-      - name: Check TypeScript compilation
-        run: npx tsc --noEmit --skipLibCheck || true
-
       - name: Verify project structure
         run: |
           echo "=== Checking critical files ==="
-          test -f Anchor.toml && echo "✅ Anchor.toml" || echo "❌ Anchor.toml missing"
-          test -f Cargo.toml && echo "✅ Cargo.toml" || echo "❌ Cargo.toml missing"
-          test -f programs/vault/src/lib.rs && echo "✅ Program entry point" || echo "❌ lib.rs missing"
-          test -f tests/vault.ts && echo "✅ Integration tests" || echo "❌ Tests missing"
-          test -f postman/solana-vault-api-tests.postman_collection.json && echo "✅ Postman collection" || echo "❌ Postman collection missing"
-          echo "=== Project structure verified ==="
+          test -f Anchor.toml && echo "✅ Anchor.toml" || exit 1
+          test -f Cargo.toml && echo "✅ Cargo.toml" || exit 1
+          test -f programs/vault/src/lib.rs && echo "✅ Program entry point" || exit 1
+          test -f tests/vault.ts && echo "✅ Integration tests" || exit 1
+          test -f postman/solana-vault-api-tests.postman_collection.json && echo "✅ Postman collection" || exit 1
+          test -d sdk && echo "✅ TypeScript SDK" || exit 1
+          echo "=== All critical files present ==="
+
+      - name: Verify Anchor config
+        run: |
+          echo "=== Anchor Configuration ==="
+          grep -q "vault" Anchor.toml && echo "✅ Vault program configured"
+          grep -q "anchor_version" Anchor.toml && echo "✅ Anchor version specified"
+          echo "=== Config verified ==="
 
   api-tests:
     name: Postman API Tests (Devnet)
@@ -54,19 +59,12 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install Newman
-        run: npm install -g newman newman-reporter-htmlextra
+        run: npm install -g newman
 
       - name: Run Postman collection against Devnet
         run: |
           newman run postman/solana-vault-api-tests.postman_collection.json \
-            --environment postman/solana-vault-devnet.postman_environment.json \
-            --reporters cli,htmlextra \
-            --reporter-htmlextra-export reports/api-test-report.html \
-            --delay-request 500
-
-      - name: Upload test report
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: api-test-report
-          path: reports/api-test-report.html
+            --env-var "rpc_url=https://api.devnet.solana.com" \
+            --env-var "vault_program_id=Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS" \
+            --env-var "wallet_address=11111111111111111111111111111111" \
+            --delay-request 1000
