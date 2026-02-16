@@ -52,6 +52,11 @@ solana-defi-vault/
 │   └── utils.rs               # Helper functions
 ├── tests/
 │   └── vault.ts               # Integration tests
+├── postman/
+│   ├── solana-vault-api-tests.postman_collection.json  # API test collection
+│   └── solana-vault-devnet.postman_environment.json    # Devnet environment
+├── .github/workflows/
+│   └── ci.yml                 # CI/CD pipeline (build + test + API tests)
 └── docs/plans/
     └── 2026-01-27-vault-design.md
 ```
@@ -103,6 +108,58 @@ solana-defi-vault/
 
 - **Performance Fee**: Charged on yield injection (default: 20%)
 - **Withdrawal Fee**: Charged on withdrawals (default: 0.5%)
+
+## CI/CD
+
+[![Solana Vault CI](https://github.com/binfengke/Solana-Defi-Vault/actions/workflows/ci.yml/badge.svg)](https://github.com/binfengke/Solana-Defi-Vault/actions/workflows/ci.yml)
+
+Automated pipeline via GitHub Actions (`.github/workflows/ci.yml`):
+
+| Stage | What it does |
+|-------|-------------|
+| **Build** | Install Rust, Solana CLI, Anchor → `anchor build` |
+| **Test** | Run integration tests → `anchor test` |
+| **API Tests** | Run Postman collection against Devnet via Newman |
+| **Report** | Generate HTML test report as build artifact |
+
+Triggered on every `push` and `pull_request` to `main`.
+
+## API Testing (Postman)
+
+The `postman/` directory contains a Postman collection for testing Solana JSON-RPC endpoints against the vault contract.
+
+### Requests
+
+| Category | Request | Validates |
+|----------|---------|-----------|
+| Health Check | Get Cluster Health | RPC node is responsive |
+| Health Check | Get Latest Blockhash | Network is producing blocks |
+| Wallet & Balance | Get SOL Balance | Wallet balance query, lamport-to-SOL conversion |
+| Wallet & Balance | Get Token Accounts by Owner | SPL token holdings for a wallet |
+| Transaction | Get Transaction by Signature | Tx status, fee, balance changes |
+| Transaction | Get Recent Signatures | Wallet transaction history |
+| Vault Contract | Get Program Account Info | Contract is deployed and executable |
+| Vault Contract | Get Program Accounts (All Pools) | Enumerate all vault pool accounts |
+
+Each request includes **automated test scripts** (Chai assertions) that validate response structure, data types, and business logic.
+
+### Run locally
+
+```bash
+# Install Newman (Postman CLI runner)
+npm install -g newman
+
+# Run collection against Devnet
+newman run postman/solana-vault-api-tests.postman_collection.json \
+  --environment postman/solana-vault-devnet.postman_environment.json
+```
+
+### Import into Postman
+
+1. Open Postman → Import → Upload Files
+2. Select `postman/solana-vault-api-tests.postman_collection.json`
+3. Import `postman/solana-vault-devnet.postman_environment.json` as environment
+4. Update `wallet_address` and `tx_signature` variables with your values
 
 ## Getting Started
 
