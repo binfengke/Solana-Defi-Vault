@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Anchor / Solana
+.anchor/
+target/
+test-ledger/
+
+# IDL (auto-generated)
+# Keep committed if you want SDK users to access it
+
+# Environment
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+
+# Build artifacts
+dist/
+build/

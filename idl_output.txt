@@ -1,0 +1,1186 @@
+
+running 6 tests
+---- IDL begin errors ----
+test test_id ... ok
+test utils::tests::test_calculate_fee ... ok
+[
+  {
+    "code": 6000,
+    "name": "UnauthorizedOwner",
+    "msg": "Only the owner can perform this action"
+  },
+  {
+    "code": 6001,
+    "name": "UnauthorizedOperator",
+    "msg": "Only the operator can perform this action"
+  },
+  {
+    "code": 6002,
+    "name": "Unauthorized",
+    "msg": "Unauthorized: requires owner or operator"
+  },
+  {
+    "code": 6003,
+    "name": "VaultPaused",
+    "msg": "Vault is currently paused"
+  },
+  {
+    "code": 6004,
+    "name": "PoolNotActive",
+    "msg": "Pool is not active"
+  },
+  {
+    "code": 6005,
+    "name": "PoolAlreadyActive",
+    "msg": "Pool is already active"
+  },
+  {
+    "code": 6006,
+    "name": "ZeroDeposit",
+    "msg": "Deposit amount must be greater than zero"
+  },
+  {
+    "code": 6007,
+    "name": "ZeroWithdrawal",
+    "msg": "Withdrawal amount must be greater than zero"
+  },
+  {
+    "code": 6008,
+    "name": "InsufficientShares",
+    "msg": "Insufficient shares balance"
+  },
+  {
+    "code": 6009,
+    "name": "InsufficientLiquidity",
+    "msg": "Insufficient vault liquidity"
+  },
+  {
+    "code": 6010,
+    "name": "DailyLimitExceeded",
+    "msg": "Daily withdrawal limit exceeded"
+  },
+  {
+    "code": 6011,
+    "name": "MinimumDepositNotMet",
+    "msg": "Minimum deposit amount not met"
+  },
+  {
+    "code": 6012,
+    "name": "MathOverflow",
+    "msg": "Math overflow occurred"
+  },
+  {
+    "code": 6013,
+    "name": "InvalidSharesCalculation",
+    "msg": "Invalid shares calculation"
+  },
+  {
+    "code": 6014,
+    "name": "DivisionByZero",
+    "msg": "Division by zero"
+  },
+  {
+    "code": 6015,
+    "name": "WithdrawalRequestExists",
+    "msg": "Withdrawal request already exists"
+  },
+  {
+    "code": 6016,
+    "name": "WithdrawalRequestNotFound",
+    "msg": "Withdrawal request not found"
+  },
+  {
+    "code": 6017,
+    "name": "WithdrawalAlreadyProcessed",
+    "msg": "Withdrawal request already processed"
+  },
+  {
+    "code": 6018,
+    "name": "InvalidFee",
+    "msg": "Invalid fee: must be <= 10000 basis points"
+  },
+  {
+    "code": 6019,
+    "name": "InvalidTokenMint",
+    "msg": "Invalid token mint"
+  },
+  {
+    "code": 6020,
+    "name": "TokenAlreadyWhitelisted",
+    "msg": "Token already whitelisted"
+  }
+]
+---- IDL end errors ----
+test utils::tests::test_is_valid_fee ... ok
+test utils::tests::test_calculate_net_after_fee ... ok
+test errors::__anchor_private_print_idl_error_VaultError ... ok
+---- IDL begin program ----
+{
+  "version": "0.1.0",
+  "name": "vault",
+  "instructions": [
+    {
+      "name": "initialize",
+      "docs": [
+        "Initialize the global vault configuration"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": "vault::instructions::admin::initialize::InitializeParams"
+          }
+        }
+      ]
+    },
+    {
+      "name": "updateConfig",
+      "docs": [
+        "Update vault configuration parameters"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": "vault::instructions::admin::update_config::UpdateConfigParams"
+          }
+        }
+      ]
+    },
+    {
+      "name": "createPool",
+      "docs": [
+        "Create a new vault pool for a token"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vaultPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The underlying token mint (e.g., USDC)"
+          ]
+        },
+        {
+          "name": "sharesMint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The shares token mint (e.g., vUSDC) - created by this instruction"
+          ]
+        },
+        {
+          "name": "tokenVault",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Token account to hold vault's assets"
+          ]
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": "vault::instructions::admin::create_pool::CreatePoolParams"
+          }
+        }
+      ]
+    },
+    {
+      "name": "pause",
+      "docs": [
+        "Pause all vault operations"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "unpause",
+      "docs": [
+        "Unpause vault operations"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "setPoolStatus",
+      "docs": [
+        "Set pool active status"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "isActive",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "setWithdrawalLimit",
+      "docs": [
+        "Set daily withdrawal limit for a pool"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "dailyLimit",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "emergencyWithdraw",
+      "docs": [
+        "Emergency withdraw all funds from a pool"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vaultPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "destination",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Destination for emergency withdrawal"
+          ]
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "transferOwnership",
+      "docs": [
+        "Transfer ownership to a new owner"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "newOwner",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "deposit",
+      "docs": [
+        "Deposit tokens into the vault and receive shares"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenVault",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault's token account"
+          ]
+        },
+        {
+          "name": "sharesMint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Shares token mint"
+          ]
+        },
+        {
+          "name": "userTokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "User's token account (source)"
+          ]
+        },
+        {
+          "name": "userSharesAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "User's shares token account (destination)"
+          ]
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdraw",
+      "docs": [
+        "Withdraw tokens by burning shares (instant if liquidity available)"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenVault",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault's token account"
+          ]
+        },
+        {
+          "name": "sharesMint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Shares token mint"
+          ]
+        },
+        {
+          "name": "userTokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "User's token account (destination)"
+          ]
+        },
+        {
+          "name": "userSharesAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "User's shares token account (source)"
+          ]
+        },
+        {
+          "name": "feeReceiverAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Fee receiver's token account"
+          ]
+        },
+        {
+          "name": "feeReceiver",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "sharesAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "requestWithdrawal",
+      "docs": [
+        "Request a withdrawal (enters queue if liquidity insufficient)"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultPool",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "withdrawalRequest",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "sharesAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "cancelWithdrawal",
+      "docs": [
+        "Cancel a pending withdrawal request"
+      ],
+      "accounts": [
+        {
+          "name": "withdrawalRequest",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "injectYield",
+      "docs": [
+        "Inject yield into the vault (auto-compounds)"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenVault",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault's token account"
+          ]
+        },
+        {
+          "name": "yieldSource",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Source of yield (operator's token account)"
+          ]
+        },
+        {
+          "name": "feeReceiverAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Fee receiver's token account"
+          ]
+        },
+        {
+          "name": "feeReceiver",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Operator or Owner"
+          ]
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "yieldAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdrawForStrategy",
+      "docs": [
+        "Withdraw funds for strategy deployment"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenVault",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault's token account"
+          ]
+        },
+        {
+          "name": "strategyDestination",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Destination for strategy deployment"
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Operator or Owner"
+          ]
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "returnFromStrategy",
+      "docs": [
+        "Return funds from strategy"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultPool",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenVault",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault's token account"
+          ]
+        },
+        {
+          "name": "strategySource",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Source of returning funds"
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Operator or Owner"
+          ]
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "processWithdrawalQueue",
+      "docs": [
+        "Process a pending withdrawal request from the queue"
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "vaultPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenVault",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Vault's token account"
+          ]
+        },
+        {
+          "name": "sharesMint",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Shares token mint"
+          ]
+        },
+        {
+          "name": "withdrawalRequest",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The withdrawal request to process"
+          ]
+        },
+        {
+          "name": "userTokenAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "User's token account (destination)"
+          ]
+        },
+        {
+          "name": "userSharesAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "User's shares token account"
+          ]
+        },
+        {
+          "name": "feeReceiverAccount",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "Fee receiver's token account"
+          ]
+        },
+        {
+          "name": "feeReceiver",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": [
+            "Operator or Owner"
+          ]
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "vault::state::pool::VaultPool",
+      "docs": [
+        "Individual Vault Pool for a specific SPL Token"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "config",
+            "docs": [
+              "Reference to the global VaultConfig"
+            ],
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenMint",
+            "docs": [
+              "The underlying SPL Token mint (e.g., USDC)"
+            ],
+            "type": "publicKey"
+          },
+          {
+            "name": "sharesMint",
+            "docs": [
+              "The Vault Shares token mint (e.g., vUSDC)"
+            ],
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenVault",
+            "docs": [
+              "Token account that holds the vault's assets"
+            ],
+            "type": "publicKey"
+          },
+          {
+            "name": "totalAssets",
+            "docs": [
+              "Total assets under management (includes deployed + idle funds)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "totalShares",
+            "docs": [
+              "Total shares minted"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "dailyWithdrawalLimit",
+            "docs": [
+              "Daily withdrawal limit (0 = unlimited)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "withdrawnToday",
+            "docs": [
+              "Amount withdrawn today (resets daily)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "lastWithdrawalDay",
+            "docs": [
+              "Timestamp of last withdrawal day (for daily reset)"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "isActive",
+            "docs": [
+              "Whether this pool is active (accepting deposits/withdrawals)"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "poolIndex",
+            "docs": [
+              "Pool index (for PDA derivation)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "sharesMintBump",
+            "docs": [
+              "Shares mint bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "vault::state::config::VaultConfig",
+      "docs": [
+        "Global configuration for the Vault protocol - Singleton PDA"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "docs": [
+              "Owner has highest privilege (add tokens, change admin, emergency actions)"
+            ],
+            "type": "publicKey"
+          },
+          {
+            "name": "operator",
+            "docs": [
+              "Operator handles daily operations (inject yield, process withdrawals)"
+            ],
+            "type": "publicKey"
+          },
+          {
+            "name": "isPaused",
+            "docs": [
+              "Global pause switch - when true, all deposits/withdrawals are disabled"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "performanceFeeBps",
+            "docs": [
+              "Performance fee in basis points (e.g., 2000 = 20%)"
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "withdrawalFeeBps",
+            "docs": [
+              "Withdrawal fee in basis points (e.g., 50 = 0.5%)"
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "feeReceiver",
+            "docs": [
+              "Address that receives collected fees"
+            ],
+            "type": "publicKey"
+          },
+          {
+            "name": "totalPools",
+            "docs": [
+              "Total number of vault pools created"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "vault::state::withdrawal::WithdrawalRequest",
+      "docs": [
+        "User's pending withdrawal request (for queue mode)"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "docs": [
+              "The user who initiated the withdrawal"
+            ],
+            "type": "publicKey"
+          },
+          {
+            "name": "vaultPool",
+            "docs": [
+              "The vault pool this request is for"
+            ],
+            "type": "publicKey"
+          },
+          {
+            "name": "sharesAmount",
+            "docs": [
+              "Amount of shares to redeem"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "requestedAt",
+            "docs": [
+              "Timestamp when request was created"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "isProcessed",
+            "docs": [
+              "Whether this request has been processed"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "vault::instructions::admin::initialize::InitializeParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "operator",
+            "type": "publicKey"
+          },
+          {
+            "name": "feeReceiver",
+            "type": "publicKey"
+          },
+          {
+            "name": "performanceFeeBps",
+            "type": "u16"
+          },
+          {
+            "name": "withdrawalFeeBps",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "vault::instructions::admin::create_pool::CreatePoolParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "dailyWithdrawalLimit",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "vault::instructions::admin::update_config::UpdateConfigParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "newOperator",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "newFeeReceiver",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "newPerformanceFeeBps",
+            "type": {
+              "option": "u16"
+            }
+          },
+          {
+            "name": "newWithdrawalFeeBps",
+            "type": {
+              "option": "u16"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+---- IDL end program ----
+test __anchor_private_print_idl_program ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
