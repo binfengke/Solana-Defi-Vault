@@ -136,10 +136,9 @@ The `postman/` directory contains a Postman collection for testing Solana JSON-R
 | Health Check | Get Latest Blockhash | Network is producing blocks |
 | Wallet & Balance | Get SOL Balance | Wallet balance query, lamport-to-SOL conversion |
 | Wallet & Balance | Get Token Accounts by Owner | SPL token holdings for a wallet |
+| Transaction | Get Recent Signatures | Wallet transaction history (used to fetch latest signature) |
 | Transaction | Get Transaction by Signature | Tx status, fee, balance changes |
-| Transaction | Get Recent Signatures | Wallet transaction history |
 | Vault Contract | Get Program Account Info | Contract is deployed and executable |
-| Vault Contract | Get Program Accounts (All Pools) | Enumerate all vault pool accounts |
 
 Each request includes **automated test scripts** (Chai assertions) that validate response structure, data types, and business logic.
 
@@ -159,7 +158,7 @@ newman run postman/solana-vault-api-tests.postman_collection.json \
 1. Open Postman → Import → Upload Files
 2. Select `postman/solana-vault-api-tests.postman_collection.json`
 3. Import `postman/solana-vault-devnet.postman_environment.json` as environment
-4. Update `wallet_address` and `tx_signature` variables with your values
+4. Update `wallet_address` with your value; `tx_signature` is optional fallback
 
 ## Getting Started
 
