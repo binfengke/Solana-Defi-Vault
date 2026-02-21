@@ -344,6 +344,52 @@
           ]
         },
         {
+          "name": "Get Vault Pool Accounts (getProgramAccounts)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "https://api.devnet.solana.com",
+              "protocol": "https",
+              "host": ["api", "devnet", "solana", "com"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getProgramAccounts\",\"params\":[\"{{vault_program_id}}\",{\"encoding\":\"base64\",\"commitment\":\"confirmed\",\"withContext\":true}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('No RPC error for vault pool enumeration', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.error).to.be.undefined;",
+                  "});",
+                  "pm.test('Program account list is returned', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.nested.property('result.value');",
+                  "    pm.expect(jsonData.result.value).to.be.an('array');",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "var accounts = (jsonData.result && jsonData.result.value) ? jsonData.result.value : [];",
+                  "pm.collectionVariables.set('vault_program_account_count', String(accounts.length));",
+                  "if (accounts.length > 0 && accounts[0].pubkey) {",
+                  "    pm.collectionVariables.set('vault_first_program_account', accounts[0].pubkey);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Get Epoch Info",
           "request": {
             "method": "POST",

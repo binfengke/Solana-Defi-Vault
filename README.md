@@ -138,7 +138,8 @@ The `postman/` directory contains a Postman collection for testing Solana JSON-R
 | Wallet & Balance | Get Token Accounts by Owner | SPL token holdings for a wallet |
 | Transaction | Get Recent Signatures | Wallet transaction history (used to fetch latest signature) |
 | Transaction | Get Transaction by Signature | Tx status, fee, balance changes |
-| Vault Contract | Get Program Account Info | Contract is deployed and executable |
+| Vault Contract | Get Vault Program Account Info | Contract is deployed and executable |
+| Vault Contract | Get Vault Pool Accounts (getProgramAccounts) | Enumerate program-owned accounts for vault pool discovery |
 
 Each request includes **automated test scripts** (Chai assertions) that validate response structure, data types, and business logic.
 
