@@ -2,6 +2,10 @@
 
 A decentralized asset vault on Solana that supports multi-token deposits, automatic yield compounding, and flexible withdrawal mechanisms.
 
+## Recent Updates
+
+- **2026-02-23**: Added vault pool enumeration API test (`getProgramAccounts`) and Newman example for running only Vault Contract checks.
+
 ## Features
 
 - **Multi-Token Support**: Whitelist-based token management with separate vault pools
