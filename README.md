@@ -214,6 +214,7 @@ anchor deploy --provider.cluster mainnet
 - [ ] Automated strategy integration (Marinade, Kamino)
 - [ ] Multisig support (Squads Protocol)
 - [ ] DAO governance
+- [ ] Landing page (project website)
 - [x] TypeScript SDK
 - [ ] React hooks for frontend integration
 
