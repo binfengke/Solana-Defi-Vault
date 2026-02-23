@@ -152,6 +152,11 @@ npm install -g newman
 # Run collection against Devnet
 newman run postman/solana-vault-api-tests.postman_collection.json \
   --environment postman/solana-vault-devnet.postman_environment.json
+
+# Run only vault contract checks (includes getProgramAccounts enumeration)
+newman run postman/solana-vault-api-tests.postman_collection.json \
+  --environment postman/solana-vault-devnet.postman_environment.json \
+  --folder "Vault Contract"
 ```
 
 ### Import into Postman
