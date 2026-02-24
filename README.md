@@ -145,6 +145,16 @@ The `postman/` directory contains a Postman collection for testing Solana JSON-R
 | Vault Contract | Get Vault Program Account Info | Contract is deployed and executable |
 | Vault Contract | Get Vault Pool Accounts (getProgramAccounts) | Enumerate program-owned accounts for vault pool discovery |
 
+### API Test Coverage Summary
+
+| Coverage Area | Details | Count |
+|---------------|---------|-------|
+| Health Check | `getHealth`, `getLatestBlockhash`, `getSlot` | 3 |
+| Wallet & Balance | `getBalance`, `getTokenAccountsByOwner` | 2 |
+| Transaction | `getSignaturesForAddress`, `getTransaction` | 2 |
+| Vault Contract | `getAccountInfo`, `getProgramAccounts`, `getEpochInfo`, `getVersion` | 4 |
+| **Total** | **JSON-RPC request scenarios in collection** | **11** |
+
 Each request includes **automated test scripts** (Chai assertions) that validate response structure, data types, and business logic.
 
 ### Run locally
