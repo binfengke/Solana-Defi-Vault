@@ -23,3 +23,5 @@ blake3 = { git = "https://github.com/BLAKE3-team/BLAKE3", tag = "1.5.1" }
 jobserver = { git = "https://github.com/rust-lang/jobserver-rs", tag = "0.1.32" }
 # Lock toml_edit to version compatible with Rust 1.79 (v0.21.1 commit)
 toml_edit = { git = "https://github.com/toml-rs/toml", rev = "v0.21.1" }
+# Patch anchor-syn to fix Windows builds when `procmacro2_semver_exempt` is enabled by newer Anchor CLIs.
+anchor-syn = { path = "vendor/anchor-syn" }

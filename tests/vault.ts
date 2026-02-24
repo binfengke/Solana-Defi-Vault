@@ -5,10 +5,10 @@ import {
   PublicKey,
   SystemProgram,
   LAMPORTS_PER_SOL,
-  SYSVAR_RENT_PUBKEY,
 } from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,
+  approve,
   createMint,
   createAccount,
   mintTo,
@@ -16,6 +16,23 @@ import {
 } from "@solana/spl-token";
 import { expect } from "chai";
 import { Vault } from "../target/types/vault";
+
+async function fundAccounts(
+  provider: anchor.AnchorProvider,
+  transfers: Array<{ to: PublicKey; lamports: number }>
+) {
+  const transaction = new anchor.web3.Transaction();
+  for (const transfer of transfers) {
+    transaction.add(
+      SystemProgram.transfer({
+        fromPubkey: provider.wallet.publicKey,
+        toPubkey: transfer.to,
+        lamports: transfer.lamports,
+      })
+    );
+  }
+  await provider.sendAndConfirm(transaction);
+}
 
 describe("vault", () => {
   const provider = anchor.AnchorProvider.env();
@@ -50,15 +67,14 @@ describe("vault", () => {
     user = Keypair.generate();
     feeReceiver = Keypair.generate();
 
-    // Airdrop SOL to accounts
-    const airdropAmount = 10 * LAMPORTS_PER_SOL;
-    await provider.connection.requestAirdrop(owner.publicKey, airdropAmount);
-    await provider.connection.requestAirdrop(operator.publicKey, airdropAmount);
-    await provider.connection.requestAirdrop(user.publicKey, airdropAmount);
-    await provider.connection.requestAirdrop(feeReceiver.publicKey, airdropAmount);
-
-    // Wait for airdrops to confirm
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Fund accounts from the provider wallet (avoids RPC airdrop flakiness)
+    const fundAmount = 10 * LAMPORTS_PER_SOL;
+    await fundAccounts(provider, [
+      { to: owner.publicKey, lamports: fundAmount },
+      { to: operator.publicKey, lamports: fundAmount },
+      { to: user.publicKey, lamports: fundAmount },
+      { to: feeReceiver.publicKey, lamports: fundAmount },
+    ]);
 
     // Create test token mint
     tokenMint = await createMint(
@@ -164,7 +180,6 @@ describe("vault", () => {
           owner: owner.publicKey,
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
-          rent: SYSVAR_RENT_PUBKEY,
         })
         .signers([owner])
         .rpc();
@@ -269,6 +284,33 @@ describe("vault", () => {
       );
       expect(vaultPool.totalShares.toNumber()).to.equal(50_000_000);
     });
+
+    it("should reject withdraw when fee receiver token account owner mismatches", async () => {
+      const sharesAmount = new anchor.BN(1_000_000); // 1 share
+
+      try {
+        await program.methods
+          .withdraw(sharesAmount)
+          .accounts({
+            config: configPda,
+            vaultPool: vaultPoolPda,
+            tokenVault: tokenVaultPda,
+            sharesMint: sharesMintPda,
+            userTokenAccount: userTokenAccount,
+            userSharesAccount: userSharesAccount,
+            feeReceiverAccount: userTokenAccount, // owned by user, not feeReceiver
+            feeReceiver: feeReceiver.publicKey,
+            user: user.publicKey,
+            clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          })
+          .signers([user])
+          .rpc();
+        expect.fail("Should have thrown an error");
+      } catch (err: any) {
+        expect(err.error.errorCode.code).to.equal("InvalidFeeReceiverAccount");
+      }
+    });
   });
 
   describe("Pause/Unpause", () => {
@@ -308,7 +350,8 @@ describe("vault", () => {
         provider.connection,
         operator,
         tokenMint,
-        operator.publicKey
+        operator.publicKey,
+        Keypair.generate()
       );
 
       await mintTo(
@@ -345,6 +388,45 @@ describe("vault", () => {
       expect(
         vaultPoolAfter.totalAssets.toNumber() - vaultPoolBefore.totalAssets.toNumber()
       ).to.equal(expectedNetYield);
+    });
+
+    it("should reject inject yield when fee receiver token account owner mismatches", async () => {
+      const operatorTokenAccount = await createAccount(
+        provider.connection,
+        operator,
+        tokenMint,
+        operator.publicKey,
+        Keypair.generate()
+      );
+
+      await mintTo(
+        provider.connection,
+        owner,
+        tokenMint,
+        operatorTokenAccount,
+        owner,
+        1_000_000 // 1 token
+      );
+
+      try {
+        await program.methods
+          .injectYield(new anchor.BN(1_000_000))
+          .accounts({
+            config: configPda,
+            vaultPool: vaultPoolPda,
+            tokenVault: tokenVaultPda,
+            yieldSource: operatorTokenAccount,
+            feeReceiverAccount: operatorTokenAccount, // owned by operator, not feeReceiver
+            feeReceiver: feeReceiver.publicKey,
+            authority: operator.publicKey,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          })
+          .signers([operator])
+          .rpc();
+        expect.fail("Should have thrown an error");
+      } catch (err: any) {
+        expect(err.error.errorCode.code).to.equal("InvalidFeeReceiverAccount");
+      }
     });
   });
 
@@ -545,7 +627,8 @@ describe("vault", () => {
         provider.connection,
         operator,
         tokenMint,
-        operator.publicKey
+        operator.publicKey,
+        Keypair.generate()
       );
     });
 
@@ -615,17 +698,16 @@ describe("vault", () => {
 
     it("should reject non-authorized from injecting yield", async () => {
       const unauthorizedUser = Keypair.generate();
-      await provider.connection.requestAirdrop(
-        unauthorizedUser.publicKey,
-        LAMPORTS_PER_SOL
-      );
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await fundAccounts(provider, [
+        { to: unauthorizedUser.publicKey, lamports: LAMPORTS_PER_SOL },
+      ]);
 
       const unauthorizedTokenAccount = await createAccount(
         provider.connection,
         unauthorizedUser,
         tokenMint,
-        unauthorizedUser.publicKey
+        unauthorizedUser.publicKey,
+        Keypair.generate()
       );
 
       try {
@@ -739,6 +821,314 @@ describe("vault", () => {
       } catch (err: any) {
         expect(err.error.errorCode.code).to.equal("InvalidFee");
       }
+    });
+  });
+
+  describe("Security Hardening", () => {
+    it("should reject processing withdrawal queue with mismatched user account", async () => {
+      const sharesAmount = new anchor.BN(5_000_000); // 5 shares
+
+      const [withdrawalRequestPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("withdrawal_request"),
+          vaultPoolPda.toBuffer(),
+          user.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      await program.methods
+        .requestWithdrawal(sharesAmount)
+        .accounts({
+          config: configPda,
+          vaultPool: vaultPoolPda,
+          withdrawalRequest: withdrawalRequestPda,
+          user: user.publicKey,
+          clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([user])
+        .rpc();
+
+      await approve(
+        provider.connection,
+        user,
+        userSharesAccount,
+        vaultPoolPda,
+        user,
+        sharesAmount.toNumber()
+      );
+
+      const fakeUser = Keypair.generate();
+      await fundAccounts(provider, [
+        { to: fakeUser.publicKey, lamports: LAMPORTS_PER_SOL },
+      ]);
+
+      try {
+        await program.methods
+          .processWithdrawalQueue()
+          .accounts({
+            config: configPda,
+            vaultPool: vaultPoolPda,
+            tokenVault: tokenVaultPda,
+            sharesMint: sharesMintPda,
+            withdrawalRequest: withdrawalRequestPda,
+            userTokenAccount: userTokenAccount,
+            userSharesAccount: userSharesAccount,
+            feeReceiverAccount: feeReceiverTokenAccount,
+            feeReceiver: feeReceiver.publicKey,
+            user: fakeUser.publicKey, // mismatched on purpose
+            authority: operator.publicKey,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          })
+          .signers([operator])
+          .rpc();
+        expect.fail("Should have thrown an error");
+      } catch (err: any) {
+        const errString = err?.toString?.() ?? String(err);
+        const logs = err?.logs ?? (await err?.getLogs?.());
+        const parsed = Array.isArray(logs) ? anchor.AnchorError.parse(logs) : null;
+        const errorCode =
+          err?.error?.errorCode?.code ??
+          parsed?.error.errorCode.code ??
+          (() => {
+            const match = err
+              ?.toString?.()
+              ?.match(/custom program error: (0x[0-9a-fA-F]+)/);
+            if (!match) return undefined;
+            const code = parseInt(match[1], 16);
+            return program.idl.errors?.find((e) => e.code === code)?.name;
+          })();
+        if (!errorCode) {
+          throw new Error(`Could not parse error code: ${errString}`);
+        }
+        expect(errorCode).to.equal("UserMismatch");
+      } finally {
+        try {
+          await program.methods
+            .cancelWithdrawal()
+            .accounts({
+              withdrawalRequest: withdrawalRequestPda,
+              user: user.publicKey,
+            })
+            .signers([user])
+            .rpc();
+        } catch {
+          // ignore cleanup failures
+        }
+      }
+    });
+
+    it("should reject emergency withdraw destination with wrong mint", async () => {
+      const otherMint = await createMint(
+        provider.connection,
+        owner,
+        owner.publicKey,
+        null,
+        6
+      );
+
+      const wrongDestination = await createAccount(
+        provider.connection,
+        owner,
+        otherMint,
+        owner.publicKey
+      );
+
+      try {
+        await program.methods
+          .emergencyWithdraw()
+          .accounts({
+            config: configPda,
+            vaultPool: vaultPoolPda,
+            tokenVault: tokenVaultPda,
+            destination: wrongDestination,
+            owner: owner.publicKey,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          })
+          .signers([owner])
+          .rpc();
+        expect.fail("Should have thrown an error");
+      } catch (err: any) {
+        const errString = err?.toString?.() ?? String(err);
+        const logs = err?.logs ?? (await err?.getLogs?.());
+        const parsed = Array.isArray(logs) ? anchor.AnchorError.parse(logs) : null;
+        const errorCode =
+          err?.error?.errorCode?.code ??
+          parsed?.error.errorCode.code ??
+          (() => {
+            const match = err
+              ?.toString?.()
+              ?.match(/custom program error: (0x[0-9a-fA-F]+)/);
+            if (!match) return undefined;
+            const code = parseInt(match[1], 16);
+            return program.idl.errors?.find((e) => e.code === code)?.name;
+          })();
+        if (!errorCode) {
+          throw new Error(`Could not parse error code: ${errString}`);
+        }
+        expect(errorCode).to.equal("InvalidTokenMint");
+      }
+    });
+
+    it("should return rent to withdrawal request user on close", async () => {
+      // Ensure vault is active/unpaused for this flow
+      await program.methods
+        .unpause()
+        .accounts({
+          config: configPda,
+          owner: owner.publicKey,
+        })
+        .signers([owner])
+        .rpc();
+
+      await program.methods
+        .setPoolStatus(true)
+        .accounts({
+          config: configPda,
+          vaultPool: vaultPoolPda,
+          owner: owner.publicKey,
+        })
+        .signers([owner])
+        .rpc();
+
+      // Top up user and deposit to ensure liquidity and shares
+      const depositAmount = new anchor.BN(10_000_000); // 10 tokens
+      await mintTo(
+        provider.connection,
+        owner,
+        tokenMint,
+        userTokenAccount,
+        owner,
+        depositAmount.toNumber()
+      );
+
+      await program.methods
+        .deposit(depositAmount)
+        .accounts({
+          config: configPda,
+          vaultPool: vaultPoolPda,
+          tokenVault: tokenVaultPda,
+          sharesMint: sharesMintPda,
+          userTokenAccount: userTokenAccount,
+          userSharesAccount: userSharesAccount,
+          user: user.publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([user])
+        .rpc();
+
+      const sharesAmount = new anchor.BN(1_000_000); // 1 share
+      const [withdrawalRequestPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("withdrawal_request"),
+          vaultPoolPda.toBuffer(),
+          user.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      await program.methods
+        .requestWithdrawal(sharesAmount)
+        .accounts({
+          config: configPda,
+          vaultPool: vaultPoolPda,
+          withdrawalRequest: withdrawalRequestPda,
+          user: user.publicKey,
+          clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([user])
+        .rpc();
+
+      await approve(
+        provider.connection,
+        user,
+        userSharesAccount,
+        vaultPoolPda,
+        user,
+        sharesAmount.toNumber()
+      );
+
+      await program.methods
+        .processWithdrawalQueue()
+        .accounts({
+          config: configPda,
+          vaultPool: vaultPoolPda,
+          tokenVault: tokenVaultPda,
+          sharesMint: sharesMintPda,
+          withdrawalRequest: withdrawalRequestPda,
+          userTokenAccount: userTokenAccount,
+          userSharesAccount: userSharesAccount,
+          feeReceiverAccount: feeReceiverTokenAccount,
+          feeReceiver: feeReceiver.publicKey,
+          user: user.publicKey,
+          authority: operator.publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+        })
+        .signers([operator])
+        .rpc();
+
+      const requestInfo = await provider.connection.getAccountInfo(withdrawalRequestPda);
+      expect(requestInfo).to.not.equal(null);
+      const requestLamports = requestInfo!.lamports;
+
+      const userBalanceBefore = await provider.connection.getBalance(user.publicKey);
+
+      const wrongUser = Keypair.generate();
+      await fundAccounts(provider, [
+        { to: wrongUser.publicKey, lamports: LAMPORTS_PER_SOL },
+      ]);
+
+      try {
+        await program.methods
+          .closeWithdrawalRequest()
+          .accounts({
+            config: configPda,
+            withdrawalRequest: withdrawalRequestPda,
+            user: wrongUser.publicKey, // mismatched on purpose
+            authority: operator.publicKey,
+          })
+          .signers([operator])
+          .rpc();
+        expect.fail("Should have thrown an error");
+      } catch (err: any) {
+        const errString = err?.toString?.() ?? String(err);
+        const logs = err?.logs ?? (await err?.getLogs?.());
+        const parsed = Array.isArray(logs) ? anchor.AnchorError.parse(logs) : null;
+        const errorCode =
+          err?.error?.errorCode?.code ??
+          parsed?.error.errorCode.code ??
+          (() => {
+            const match = err
+              ?.toString?.()
+              ?.match(/custom program error: (0x[0-9a-fA-F]+)/);
+            if (!match) return undefined;
+            const code = parseInt(match[1], 16);
+            return program.idl.errors?.find((e) => e.code === code)?.name;
+          })();
+        if (!errorCode) {
+          throw new Error(`Could not parse error code: ${errString}`);
+        }
+        expect(errorCode).to.equal("UserMismatch");
+      }
+
+      await program.methods
+        .closeWithdrawalRequest()
+        .accounts({
+          config: configPda,
+          withdrawalRequest: withdrawalRequestPda,
+          user: user.publicKey,
+          authority: operator.publicKey,
+        })
+        .signers([operator])
+        .rpc();
+
+      const userBalanceAfter = await provider.connection.getBalance(user.publicKey);
+      expect(userBalanceAfter - userBalanceBefore).to.equal(requestLamports);
+
+      const requestAfter = await provider.connection.getAccountInfo(withdrawalRequestPda);
+      expect(requestAfter).to.equal(null);
     });
   });
 });

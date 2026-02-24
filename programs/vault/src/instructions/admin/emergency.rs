@@ -110,7 +110,10 @@ pub struct EmergencyWithdraw<'info> {
     pub token_vault: Account<'info, TokenAccount>,
 
     /// Destination for emergency withdrawal
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = destination.mint == vault_pool.token_mint @ VaultError::InvalidTokenMint
+    )]
     pub destination: Account<'info, TokenAccount>,
 
     pub owner: Signer<'info>,
@@ -120,6 +123,12 @@ pub struct EmergencyWithdraw<'info> {
 pub fn emergency_withdraw_handler(ctx: Context<EmergencyWithdraw>) -> Result<()> {
     let vault_pool = &mut ctx.accounts.vault_pool;
     let config = &mut ctx.accounts.config;
+
+    require_keys_eq!(
+        ctx.accounts.destination.mint,
+        vault_pool.token_mint,
+        VaultError::InvalidTokenMint
+    );
 
     let amount = ctx.accounts.token_vault.amount;
 

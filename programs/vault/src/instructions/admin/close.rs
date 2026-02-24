@@ -22,13 +22,13 @@ pub struct CloseWithdrawalRequest<'info> {
         ],
         bump = withdrawal_request.bump,
         constraint = withdrawal_request.is_processed @ VaultError::WithdrawalRequestNotFound,
-        close = rent_receiver
+        close = user
     )]
     pub withdrawal_request: Account<'info, WithdrawalRequest>,
 
-    /// CHECK: Receives the rent from closed account
-    #[account(mut)]
-    pub rent_receiver: UncheckedAccount<'info>,
+    /// CHECK: Rent always returned to the withdrawal request user
+    #[account(mut, address = withdrawal_request.user @ VaultError::UserMismatch)]
+    pub user: UncheckedAccount<'info>,
 
     /// Operator or Owner
     pub authority: Signer<'info>,

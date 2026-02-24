@@ -61,12 +61,18 @@ pub enum VaultError {
     #[msg("Withdrawal request already processed")]
     WithdrawalAlreadyProcessed,
 
+    #[msg("User does not match withdrawal request")]
+    UserMismatch,
+
     // === Configuration Errors ===
     #[msg("Invalid fee: must be <= 10000 basis points")]
     InvalidFee,
 
     #[msg("Invalid token mint")]
     InvalidTokenMint,
+
+    #[msg("Invalid fee receiver token account")]
+    InvalidFeeReceiverAccount,
 
     #[msg("Token already whitelisted")]
     TokenAlreadyWhitelisted,

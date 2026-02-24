@@ -67,7 +67,8 @@ pub struct ProcessWithdrawalQueue<'info> {
     /// Fee receiver's token account
     #[account(
         mut,
-        constraint = fee_receiver_account.mint == vault_pool.token_mint @ VaultError::InvalidTokenMint
+        constraint = fee_receiver_account.mint == vault_pool.token_mint @ VaultError::InvalidTokenMint,
+        constraint = fee_receiver_account.owner == fee_receiver.key() @ VaultError::InvalidFeeReceiverAccount
     )]
     pub fee_receiver_account: Account<'info, TokenAccount>,
 
@@ -75,6 +76,7 @@ pub struct ProcessWithdrawalQueue<'info> {
     pub fee_receiver: UncheckedAccount<'info>,
 
     /// CHECK: The user who made the request (for verification)
+    #[account(constraint = user.key() == withdrawal_request.user @ VaultError::UserMismatch)]
     pub user: UncheckedAccount<'info>,
 
     /// Operator or Owner
@@ -87,6 +89,12 @@ pub fn process_withdrawal_queue_handler(ctx: Context<ProcessWithdrawalQueue>) ->
     let config = &ctx.accounts.config;
     let vault_pool = &mut ctx.accounts.vault_pool;
     let withdrawal_request = &mut ctx.accounts.withdrawal_request;
+
+    require_keys_eq!(
+        ctx.accounts.user.key(),
+        withdrawal_request.user,
+        VaultError::UserMismatch
+    );
 
     let shares_amount = withdrawal_request.shares_amount;
 

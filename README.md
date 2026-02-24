@@ -4,6 +4,7 @@ A decentralized asset vault on Solana that supports multi-token deposits, automa
 
 ## Recent Updates
 
+- **2026-02-24**: Security hardening — validate fee receiver token account ownership, validate emergency-withdraw destination mint, and ensure withdrawal-request rent is returned to the requester (with TS regression tests).
 - **2026-02-23**: Added vault pool enumeration API test (`getProgramAccounts`) and Newman example for running only Vault Contract checks.
 
 ## Features
@@ -60,7 +61,7 @@ solana-defi-vault/
 │   ├── solana-vault-api-tests.postman_collection.json  # API test collection
 │   └── solana-vault-devnet.postman_environment.json    # Devnet environment
 ├── .github/workflows/
-│   └── ci.yml                 # CI/CD pipeline (build + test + API tests)
+│   └── ci.yml                 # CI checks + Postman API tests
 └── docs/plans/
     └── 2026-01-27-vault-design.md
 ```
@@ -218,6 +219,7 @@ anchor deploy --provider.cluster mainnet
 3. **Tiered Access**: Separation of owner and operator privileges
 4. **Checked Math**: All arithmetic uses checked operations to prevent overflow
 5. **Minimum Deposit**: Prevents precision/rounding attacks
+6. **Account Validation**: Fee receiver token accounts and emergency-withdraw destinations are validated; withdrawal-request rent is returned to the requester
 
 ## Future Enhancements
 

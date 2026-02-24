@@ -39,7 +39,8 @@ pub struct InjectYield<'info> {
     /// Fee receiver's token account
     #[account(
         mut,
-        constraint = fee_receiver_account.mint == vault_pool.token_mint @ VaultError::InvalidTokenMint
+        constraint = fee_receiver_account.mint == vault_pool.token_mint @ VaultError::InvalidTokenMint,
+        constraint = fee_receiver_account.owner == fee_receiver.key() @ VaultError::InvalidFeeReceiverAccount
     )]
     pub fee_receiver_account: Account<'info, TokenAccount>,
 
