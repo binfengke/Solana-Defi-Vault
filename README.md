@@ -122,12 +122,12 @@ Automated pipeline via GitHub Actions (`.github/workflows/ci.yml`):
 
 | Stage | What it does |
 |-------|-------------|
-| **Build** | Install Rust, Solana CLI, Anchor → `anchor build` |
-| **Test** | Run integration tests → `anchor test` |
-| **API Tests** | Run Postman collection against Devnet via Newman |
-| **Report** | Generate HTML test report as build artifact |
+| **Structure Check** | Validates critical repo files + Anchor config is present |
+| **API Tests** | Runs Postman collection against Devnet via Newman |
 
-Triggered on every `push` and `pull_request` to `main`.
+Triggered on every `push` / `pull_request` to `main` (and manual `workflow_dispatch`).
+
+For on-chain program tests, run locally: `anchor test`.
 
 ## API Testing (Postman)
 
